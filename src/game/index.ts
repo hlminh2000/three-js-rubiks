@@ -5,7 +5,7 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 
-import { RubiksCube } from "./RubiksCube";
+import { RubiksCube } from "./components/RubiksCube";
 import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
 
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
@@ -28,6 +28,8 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
 
   const rubiksCube = new RubiksCube();
   camera.position.z = 1;
+  camera.position.y = 1;
+  camera.position.x = 0.5;
   scene.add(rubiksCube);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -57,6 +59,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   function animation(time: number) {
     rubiksCube.rotation.x = time / 2000;
     rubiksCube.rotation.y = time / 1000;
+    rubiksCube.update(time);
     if (ORBIT_CONTROL_ENABLED) {
       controls.update();
     }
