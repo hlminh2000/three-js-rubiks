@@ -58,7 +58,7 @@ export class RubiksCube extends THREE.Mesh {
           this.cubeSize,
           this.cubeSize,
           6,
-          0.003
+          0.004
         );
         const edges = new THREE.EdgesGeometry(geometry);
         const line = new THREE.LineSegments(

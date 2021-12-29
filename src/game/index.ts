@@ -8,6 +8,9 @@ import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 import { RubiksCube } from "./RubiksCube";
 import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
 
+console.log("ORBIT_CONTROL_ENABLED: ", ORBIT_CONTROL_ENABLED);
+console.log("BLOOM_ENABLED: ", BLOOM_ENABLED);
+
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const camera = new THREE.PerspectiveCamera(
       70,
@@ -21,12 +24,18 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const hemiLight = new THREE.HemisphereLight(0xffeeb1, 0x080820, 4);
   scene.add(hemiLight);
 
+  const directionalLight = new THREE.DirectionalLight(0xffffff);
+  directionalLight.position.set(0, 6, 0);
+  directionalLight.castShadow = true;
+  scene.add(directionalLight);
+
   const rubiksCube = new RubiksCube();
   camera.position.z = 1;
   scene.add(rubiksCube);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animation);
+  renderer.shadowMap.enabled = true;
   domContainer.appendChild(renderer.domElement);
 
   const bloomPass = new UnrealBloomPass(
