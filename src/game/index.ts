@@ -56,6 +56,4 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
 
   const vrButton = VRButton.createButton(renderer);
   domContainer.appendChild(vrButton);
-
-  return { vrButton };
 }

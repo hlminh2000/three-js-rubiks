@@ -3,12 +3,10 @@ import { init } from "./game";
 
 function App() {
   const threeContainer = React.useRef<HTMLDivElement | null>(null);
-  const [vrButton, setVrButton] = useState<HTMLElement | null>(null);
 
   React.useEffect(() => {
     if (threeContainer.current) {
-      const { vrButton } = init({ domContainer: threeContainer.current });
-      setVrButton(vrButton);
+      init({ domContainer: threeContainer.current });
     }
   }, []);
 
@@ -23,7 +21,6 @@ function App() {
           threeContainer.current = el;
         }}
       />
-      {/* {vrButton} */}
     </div>
   );
 }
