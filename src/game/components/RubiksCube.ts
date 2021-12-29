@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Block } from "./Block";
 import { flattenDeep } from "lodash";
 import TWEEN, { Tween } from "@tweenjs/tween.js";
+import { Signal } from "typed-signals";
 
 export class RubiksCube extends THREE.Mesh {
   private _blockSize = 0.1;
@@ -40,8 +41,15 @@ export class RubiksCube extends THREE.Mesh {
   );
   private tweens: Tween<any>[] = [];
 
-  constructor() {
+  constructor({
+    animationFrameSignal,
+  }: {
+    animationFrameSignal: Signal<(time: number) => void>;
+  }) {
     super();
+    animationFrameSignal.connect((time) => {
+      this.renderUpdate(time);
+    });
     this.snapToPlace();
   }
 
@@ -73,7 +81,7 @@ export class RubiksCube extends THREE.Mesh {
     return this._blocks.every((block) => block.inRightPlace);
   }
 
-  public update(time: number) {
+  private renderUpdate(time: number) {
     this.tweens.forEach((tween) => tween.update(time));
   }
 }

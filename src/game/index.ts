@@ -4,11 +4,14 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
+import { Signal } from "typed-signals";
 
 import { RubiksCube } from "./components/RubiksCube";
 import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
 
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
+  const animationFrameSignal = new Signal<(time: number) => void>();
+
   const camera = new THREE.PerspectiveCamera(
       70,
       window.innerWidth / window.innerHeight,
@@ -26,7 +29,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   directionalLight.castShadow = true;
   scene.add(directionalLight);
 
-  const rubiksCube = new RubiksCube();
+  const rubiksCube = new RubiksCube({ animationFrameSignal });
   camera.position.z = 1;
   camera.position.y = 1;
   camera.position.x = 0.5;
@@ -59,7 +62,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   function animation(time: number) {
     rubiksCube.rotation.x = time / 2000;
     rubiksCube.rotation.y = time / 1000;
-    rubiksCube.update(time);
+    animationFrameSignal.emit(time);
     if (ORBIT_CONTROL_ENABLED) {
       controls.update();
     }
