@@ -8,9 +8,6 @@ import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 import { RubiksCube } from "./RubiksCube";
 import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
 
-console.log("ORBIT_CONTROL_ENABLED: ", ORBIT_CONTROL_ENABLED);
-console.log("BLOOM_ENABLED: ", BLOOM_ENABLED);
-
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const camera = new THREE.PerspectiveCamera(
       70,
