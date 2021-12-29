@@ -1,11 +1,12 @@
 import * as THREE from "three";
-// import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
-// import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
-// import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 
 import { RubiksCube } from "./RubiksCube";
+import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
 
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const camera = new THREE.PerspectiveCamera(
@@ -28,19 +29,19 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   renderer.setAnimationLoop(animation);
   domContainer.appendChild(renderer.domElement);
 
-  //   const bloomPass = new UnrealBloomPass(
-  //     new THREE.Vector2(window.innerWidth, window.innerHeight),
-  //     1.5,
-  //     0.4,
-  //     0.85
-  //   );
-  //   bloomPass.threshold = 0;
-  //   bloomPass.strength = 0.75;
-  //   bloomPass.radius = 0.5;
-  //   const renderScene = new RenderPass(scene, camera);
-  //   const composer = new EffectComposer(renderer);
-  //   composer.addPass(renderScene);
-  //   composer.addPass(bloomPass);
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    1.5,
+    0.4,
+    0.85
+  );
+  bloomPass.threshold = 0;
+  bloomPass.strength = 0.75;
+  bloomPass.radius = 0.5;
+  const renderScene = new RenderPass(scene, camera);
+  const composer = new EffectComposer(renderer);
+  composer.addPass(renderScene);
+  composer.addPass(bloomPass);
 
   const gridHelper = new THREE.GridHelper(10, 100);
   scene.add(gridHelper);
@@ -50,9 +51,14 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   function animation(time: number) {
     rubiksCube.rotation.x = time / 2000;
     rubiksCube.rotation.y = time / 1000;
-    controls.update();
-    // composer.render();
-    renderer.render(scene, camera);
+    if (ORBIT_CONTROL_ENABLED) {
+      controls.update();
+    }
+    if (BLOOM_ENABLED) {
+      composer.render();
+    } else {
+      renderer.render(scene, camera);
+    }
   }
 
   const vrButton = VRButton.createButton(renderer);
