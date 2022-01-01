@@ -9,6 +9,8 @@ import { Signal } from "typed-signals";
 import { RubiksCube } from "./components/RubiksCube";
 import { mouse, raycaster } from "./components/singletons";
 import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
+import { Block } from "./components/Block";
+import { Vector3 } from "three";
 
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const animationFrameSignal = new Signal<(time: number) => void>();
@@ -33,7 +35,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const directionalLight = new THREE.DirectionalLight(0xffffff);
   directionalLight.position.set(3, 6, 7);
   directionalLight.castShadow = true;
-  scene.add(directionalLight);
+  // scene.add(directionalLight);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animation);
@@ -54,17 +56,19 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
 
-  //   const gridHelper = new THREE.GridHelper(10, 100);
-  //   scene.add(gridHelper);
+  const gridHelper = new THREE.GridHelper(10, 100);
+  // scene.add(gridHelper);
 
   const controls = new OrbitControls(camera, renderer.domElement);
 
   const rubiksCube = new RubiksCube({ animationFrameSignal });
   scene.add(rubiksCube);
-  rubiksCube.position.x = -rubiksCube.box.max.sub(rubiksCube.box.min).x / 3;
-  rubiksCube.position.y = -rubiksCube.box.max.sub(rubiksCube.box.min).y / 3;
-  rubiksCube.position.z = -rubiksCube.box.max.sub(rubiksCube.box.min).z / 3;
   console.log(rubiksCube.box.max.sub(rubiksCube.box.min));
+  const indicatorblock = new Block({
+    blockSize: 10,
+    initialPosition: new Vector3(0, 0, 0),
+  });
+  // scene.add(indicatorblock);
 
   rubiksCube.subscribeToInteraction(({ type }) => {
     const handler = {
@@ -104,4 +108,6 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
 
   const vrButton = VRButton.createButton(renderer);
   domContainer.appendChild(vrButton);
+
+  return { rubiksCube };
 }

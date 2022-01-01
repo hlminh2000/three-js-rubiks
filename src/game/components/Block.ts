@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { Vector3 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry";
 import { raycaster } from "./singletons";
 
@@ -22,15 +23,15 @@ export class Block extends THREE.Mesh {
   );
   private block: THREE.Mesh;
   private highlightLines: THREE.LineSegments;
-  private readonly _initialCoordinate: Coordinate;
-  public currentCoordinate: Coordinate;
+  private readonly _initialCoordinate: Vector3;
+  public currentCoordinate: Vector3;
 
   constructor({
     blockSize,
     initialPosition,
   }: {
     blockSize: number;
-    initialPosition: Coordinate;
+    initialPosition: Vector3;
   }) {
     super();
 
@@ -71,6 +72,23 @@ export class Block extends THREE.Mesh {
   }
 
   public get initialCoordinate() {
-    return { ...this._initialCoordinate };
+    return new Vector3(
+      this._initialCoordinate.x,
+      this._initialCoordinate.y,
+      this._initialCoordinate.z
+    );
+  }
+
+  public setRotation({ x, y, z }: { x: number; y: number; z: number }) {
+    this.block.rotation.x = x;
+    this.block.rotation.y = y;
+    this.block.rotation.z = z;
+  }
+  public get blockRotation() {
+    return {
+      x: this.block.rotation.x,
+      y: this.block.rotation.y,
+      z: this.block.rotation.z,
+    };
   }
 }

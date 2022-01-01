@@ -1,17 +1,28 @@
 import React from "react";
 import { init } from "./game";
+import { RubiksCube } from "./game/components/RubiksCube";
 
 function App() {
   const threeContainer = React.useRef<HTMLDivElement | null>(null);
+  const [cube, setCube] = React.useState<RubiksCube>();
 
   React.useEffect(() => {
     if (threeContainer.current) {
-      init({ domContainer: threeContainer.current });
+      const { rubiksCube } = init({ domContainer: threeContainer.current });
+      setCube(rubiksCube);
     }
   }, []);
 
+  const resetCube = () => {
+    cube?.reset();
+  };
+
   return (
-    <div className="App">
+    <div
+      style={{
+        position: "relative",
+      }}
+    >
       <div
         style={{
           width: "100%",
@@ -21,8 +32,25 @@ function App() {
           threeContainer.current = el;
         }}
       />
+      <button
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          margin: 10,
+        }}
+        onClick={resetCube}
+      >
+        Reset
+      </button>
     </div>
   );
 }
 
-export default App;
+export default () => {
+  return (
+    <div className="App">
+      <App />
+    </div>
+  );
+};
