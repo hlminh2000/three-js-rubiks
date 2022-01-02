@@ -2,7 +2,7 @@ import React from "react";
 import { init } from "./game";
 import { RubiksCube } from "./game/components/RubiksCube";
 
-function App() {
+function Game() {
   const threeContainer = React.useRef<HTMLDivElement | null>(null);
   const [cube, setCube] = React.useState<RubiksCube>();
 
@@ -47,10 +47,12 @@ function App() {
   );
 }
 
-export default () => {
+const App = () => {
   return (
     <div className="App">
-      <App />
+      <Game />
     </div>
   );
 };
+
+export default App;
