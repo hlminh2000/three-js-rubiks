@@ -13,7 +13,7 @@ import { Block } from "./components/Block";
 import { Vector3 } from "three";
 
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
-  const animationFrameSignal = new Signal<(time: number) => void>();
+  const renderFrameSignal = new Signal<(time: number) => void>();
 
   const camera = new THREE.PerspectiveCamera(
       70,
@@ -61,7 +61,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
 
   const controls = new OrbitControls(camera, renderer.domElement);
 
-  const rubiksCube = new RubiksCube({ animationFrameSignal });
+  const rubiksCube = new RubiksCube({ renderFrameSignal });
   scene.add(rubiksCube);
   console.log(rubiksCube.box.max.sub(rubiksCube.box.min));
   const indicatorblock = new Block({
@@ -87,7 +87,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
     // rubiksCube.rotation.x = time / 2000;
     // rubiksCube.rotation.y = time / 1000;
     raycaster.setFromCamera(mouse, camera);
-    animationFrameSignal.emit(time);
+    renderFrameSignal.emit(time);
     if (ORBIT_CONTROL_ENABLED) {
       controls.update();
     }

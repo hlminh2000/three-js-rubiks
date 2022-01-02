@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { Vector3 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry";
-import { raycaster } from "./singletons";
 
 export type Coordinate = {
   x: number;
@@ -49,7 +48,7 @@ export class Block extends THREE.Mesh {
     );
     this.block = new THREE.Mesh(geometry, this.cubeMaterials);
     this._initialCoordinate = initialPosition;
-    this.currentCoordinate = initialPosition;
+    this.currentCoordinate = this.initialCoordinate;
     this.add(this.block);
     console.log(this.block.position);
   }
@@ -78,17 +77,7 @@ export class Block extends THREE.Mesh {
       this._initialCoordinate.z
     );
   }
-
-  public setRotation({ x, y, z }: { x: number; y: number; z: number }) {
-    this.block.rotation.x = x;
-    this.block.rotation.y = y;
-    this.block.rotation.z = z;
-  }
-  public get blockRotation() {
-    return {
-      x: this.block.rotation.x,
-      y: this.block.rotation.y,
-      z: this.block.rotation.z,
-    };
+  public reset() {
+    this.currentCoordinate = this.initialCoordinate;
   }
 }

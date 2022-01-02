@@ -7,6 +7,7 @@ import { raycaster } from "./singletons";
 import max from "lodash/max";
 import min from "lodash/min";
 import { MathUtils, Vector2, Vector3 } from "three";
+import Animator from "./Animator";
 
 enum RubiksCubeInteractions {
   ROTATE_START = "ROTATE_START",
@@ -42,6 +43,9 @@ const rotateVector3 = (vector: Vector3, radian: number, axis: Dimention) => {
 };
 
 export class RubiksCube extends THREE.Mesh {
+  private static rotationOffsetAnimationRatio = 1.3;
+  public static Interactions = RubiksCubeInteractions;
+
   private _blockSize = 0.1;
   private _blocks = flattenDeep<Block>(
     [
@@ -72,32 +76,32 @@ export class RubiksCube extends THREE.Mesh {
       )
     )
   );
-  private tweens: Tween<any>[] = [];
   private rotatingBlocks: Block[] = [];
   private mouseDownPoint: Vector2 | null = null;
-  static Interactions = RubiksCubeInteractions;
   private interactionSignal = new Signal<
     (payload: { type: RubiksCubeInteractions }) => void
   >();
-  private rotatingDimention: Dimention | null = null;
+  private rotatingAxis: Dimention | null = null;
   private rotationMesh: THREE.Mesh = new THREE.Mesh();
-  private static rotationOffsetAnimationRatio = 1.3;
   private animating = false;
+  private animator: Animator;
 
   constructor({
-    animationFrameSignal,
+    renderFrameSignal,
   }: {
-    animationFrameSignal: Signal<(time: number) => void>;
+    renderFrameSignal: Signal<(time: number) => void>;
   }) {
     super();
 
     //@ts-ignore
     window.cube = this;
 
-    animationFrameSignal.connect((time) => {
+    renderFrameSignal.connect((time) => {
       this.renderUpdate(time);
     });
-    this.positionBlocks();
+    this.animator = new Animator({ renderFrameSignal });
+
+    this.positionBlocks({ animate: true });
 
     window.addEventListener("mousemove", (e) => this.onMouseMove(e));
     window.addEventListener("mousedown", (e) => this.onMouseDown(e));
@@ -105,12 +109,12 @@ export class RubiksCube extends THREE.Mesh {
   }
 
   private onMouseMove(e: MouseEvent) {
-    if (this.isRotating && this.mouseDownPoint && this.rotatingDimention) {
+    if (this.isRotating && this.mouseDownPoint && this.rotatingAxis) {
       const currentMouseCoordinate = new Vector2(e.offsetX, e.offsetY);
 
       const angleDelta =
         this.mouseDownPoint.angle() - currentMouseCoordinate.angle();
-      this.rotationMesh.rotation[this.rotatingDimention] = angleDelta * 3;
+      this.rotationMesh.rotation[this.rotatingAxis] = angleDelta * 3;
 
       this.interactionSignal.emit({
         type: RubiksCubeInteractions.ROTATE,
@@ -125,7 +129,7 @@ export class RubiksCube extends THREE.Mesh {
         const { blocks: targetBlocks, dimention } =
           this.getTargetBlocks(mouseTarget);
 
-        this.rotatingDimention = dimention.dimention;
+        this.rotatingAxis = dimention.dimention;
         const targetBlockPositionOnRotatingDimention =
           targetBlocks[0].position[dimention.dimention];
 
@@ -143,7 +147,7 @@ export class RubiksCube extends THREE.Mesh {
           type: RubiksCubeInteractions.ROTATE_START,
         });
 
-        await this.animate(
+        await this.animator.animate(
           new Tween(this.rotationMesh.position)
             .to(
               {
@@ -174,11 +178,11 @@ export class RubiksCube extends THREE.Mesh {
   }
 
   private async onMouseUp() {
-    if (this.isRotating && this.rotatingDimention) {
+    if (this.isRotating && this.rotatingAxis && !this.animating) {
       const rotatingBlocks = this.rotatingBlocks;
-      const rotatingDimention = this.rotatingDimention;
+      const rotatingAxis = this.rotatingAxis;
       const targetDeltaAngle = RubiksCube.getSnapToAngle(
-        this.rotationMesh.rotation[rotatingDimention]
+        this.rotationMesh.rotation[rotatingAxis]
       );
 
       this.rotatingBlocks = [];
@@ -188,27 +192,27 @@ export class RubiksCube extends THREE.Mesh {
       });
 
       await Promise.all([
-        this.animate(
+        this.animator.animate(
           new Tween(this.rotationMesh.position)
             .to(
               {
                 ...this.rotationMesh.position,
-                [rotatingDimention]:
-                  this.rotationMesh.position[rotatingDimention] /
+                [rotatingAxis]:
+                  this.rotationMesh.position[rotatingAxis] /
                   RubiksCube.rotationOffsetAnimationRatio,
               },
               250
             )
             .easing(TWEEN.Easing.Quadratic.Out)
         ),
-        this.animate(
+        this.animator.animate(
           new Tween(this.rotationMesh.rotation)
             .to(
               {
                 x: 0,
                 y: 0,
                 z: 0,
-                [rotatingDimention]: targetDeltaAngle,
+                [rotatingAxis]: targetDeltaAngle,
               },
               500
             )
@@ -220,47 +224,37 @@ export class RubiksCube extends THREE.Mesh {
         const newLocation = rotateVector3(
           block.currentCoordinate,
           targetDeltaAngle,
-          rotatingDimention
+          rotatingAxis
         );
         console.log("=======================");
         console.log("location:", block.currentCoordinate, "--->", newLocation);
         console.log("initialLocation:", block.initialCoordinate);
         block.currentCoordinate = newLocation;
-        const newRotation = {
-          ...block.blockRotation,
-          [rotatingDimention]:
-            block.blockRotation[rotatingDimention] + targetDeltaAngle,
-        };
-        console.log(block.blockRotation, "--->", newRotation);
-        block.setRotation(newRotation);
+        block.rotateOnAxis(
+          {
+            x: new Vector3(1, 0, 0),
+            y: new Vector3(0, 1, 0),
+            z: new Vector3(0, 0, 1),
+          }[rotatingAxis],
+          targetDeltaAngle
+        );
+        block.position[rotatingAxis] = this.rotationMesh.position[rotatingAxis];
+        this.add(block);
       });
       this.positionBlocks();
-
-      this.rotationMesh.rotation.x = 0;
-      this.rotationMesh.rotation.y = 0;
-      this.rotationMesh.rotation.z = 0;
-
-      this.rotationMesh.position.x = 0;
-      this.rotationMesh.position.y = 0;
-      this.rotationMesh.position.z = 0;
+      this.resetRotationMesh();
       this.remove(this.rotationMesh);
     }
   }
 
-  private async animate(tween: Tween<any>) {
-    this.animating = true;
-    return new Promise((resolve, reject) => {
-      this.tweens = [
-        ...this.tweens,
-        tween
-          .onComplete((...args) => {
-            this.tweens = this.tweens.filter((t) => t !== tween);
-            this.animating = false;
-            resolve(tween);
-          })
-          .start(),
-      ];
-    });
+  private resetRotationMesh() {
+    this.rotationMesh.rotation.x = 0;
+    this.rotationMesh.rotation.y = 0;
+    this.rotationMesh.rotation.z = 0;
+
+    this.rotationMesh.position.x = 0;
+    this.rotationMesh.position.y = 0;
+    this.rotationMesh.position.z = 0;
   }
 
   private getTargetBlocks(
@@ -329,18 +323,6 @@ export class RubiksCube extends THREE.Mesh {
       : undefined;
   }
 
-  private positionBlocks() {
-    this._blocks.forEach((block) => {
-      this.add(block);
-      const {
-        currentCoordinate: { x, y, z },
-      } = block;
-      block.position.x = x * this._blockSize * 1.1;
-      block.position.y = y * this._blockSize * 1.1;
-      block.position.z = z * this._blockSize * 1.1;
-    });
-  }
-
   public get solved() {
     return this._blocks.every((block) => block.inRightPlace);
   }
@@ -359,15 +341,68 @@ export class RubiksCube extends THREE.Mesh {
     return new THREE.Box3().setFromObject(this);
   }
 
-  public reset() {
-    this._blocks.forEach((block) => {
-      block.currentCoordinate = block.initialCoordinate;
-      block.setRotation({ x: 0, y: 0, z: 0 });
+  private async resetBlocks() {
+    this._blocks.forEach(async (block) => {
+      block.reset();
+      await this.animator.animate(
+        new Tween(block.rotation)
+          .to(
+            {
+              x: 0,
+              y: 0,
+              z: 0,
+            },
+            5000
+          )
+          .easing(TWEEN.Easing.Quadratic.Out)
+      );
     });
+    await this.positionBlocks({ animate: true });
+  }
+
+  private positionBlocks({ animate = false } = { animate: false as boolean }) {
+    if (animate) {
+      return Promise.all(
+        this._blocks.map(async (block) => {
+          this.add(block);
+          const {
+            currentCoordinate: { x, y, z },
+          } = block;
+
+          await this.animator.animate(
+            new Tween(block.position)
+              .to(
+                {
+                  x: x * this._blockSize * 1.1,
+                  y: y * this._blockSize * 1.1,
+                  z: z * this._blockSize * 1.1,
+                },
+                5000
+              )
+              .easing(TWEEN.Easing.Quadratic.Out)
+          );
+        })
+      );
+    } else {
+      this._blocks.map(async (block) => {
+        this.add(block);
+        const {
+          currentCoordinate: { x, y, z },
+        } = block;
+
+        block.position.x = x * this._blockSize * 1.1;
+        block.position.y = y * this._blockSize * 1.1;
+        block.position.z = z * this._blockSize * 1.1;
+      });
+    }
+  }
+
+  public async reset() {
+    this.resetRotationMesh();
+    await this.resetBlocks();
   }
 
   private renderUpdate(time: number) {
-    this.tweens.forEach((tween) => tween.update(time));
     if (this.isRotating) {
       this.rotatingBlocks.forEach((block) => {
         block.highlight();
