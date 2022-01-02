@@ -61,7 +61,6 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
 
   const rubiksCube = new RubiksCube({ renderFrameSignal });
   scene.add(rubiksCube);
-  console.log(rubiksCube.box.max.sub(rubiksCube.box.min));
 
   rubiksCube.subscribeToInteraction(({ type }) => {
     const handler = {
@@ -77,8 +76,6 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   });
 
   function animation(time: number) {
-    // rubiksCube.rotation.x = time / 2000;
-    // rubiksCube.rotation.y = time / 1000;
     raycaster.setFromCamera(mouse, camera);
     renderFrameSignal.emit(time);
     if (ORBIT_CONTROL_ENABLED) {

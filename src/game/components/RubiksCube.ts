@@ -26,14 +26,19 @@ const vector2MultMatrix = (vector: Vector2, matrix: number[][]) =>
   );
 
 const rotateVector3 = (vector: Vector3, radian: number, axis: Dimention) => {
+  const adjustedRadian = {
+    x: radian,
+    y: -radian, // adjustment for the fact that y axis is flipped
+    z: radian,
+  }[axis];
   const vector2 = {
     x: new Vector2(vector.y, vector.z),
     y: new Vector2(vector.x, vector.z),
     z: new Vector2(vector.x, vector.y),
   }[axis];
   const rotatedVector2 = vector2MultMatrix(vector2, [
-    [Math.cos(radian), -Math.sin(radian)],
-    [Math.sin(radian), Math.cos(radian)],
+    [Math.cos(adjustedRadian), -Math.sin(adjustedRadian)],
+    [Math.sin(adjustedRadian), Math.cos(adjustedRadian)],
   ]);
   return {
     x: new Vector3(vector.x, rotatedVector2.x, rotatedVector2.y),
@@ -83,7 +88,6 @@ export class RubiksCube extends THREE.Mesh {
   >();
   private rotatingAxis: Dimention | null = null;
   private rotationMesh: THREE.Mesh = new THREE.Mesh();
-  private animating = false;
   private animator: Animator;
 
   constructor({
@@ -123,7 +127,7 @@ export class RubiksCube extends THREE.Mesh {
   }
 
   private async onMouseDown(e: MouseEvent) {
-    if (!this.animating) {
+    if (!this.animator.animating) {
       const mouseTarget = this.getMouseTarget();
       if (mouseTarget) {
         const { blocks: targetBlocks, dimention } =
@@ -178,7 +182,7 @@ export class RubiksCube extends THREE.Mesh {
   }
 
   private async onMouseUp() {
-    if (this.isRotating && this.rotatingAxis && !this.animating) {
+    if (this.isRotating && this.rotatingAxis && !this.animator.animating) {
       const rotatingBlocks = this.rotatingBlocks;
       const rotatingAxis = this.rotatingAxis;
       const targetDeltaAngle = RubiksCube.getSnapToAngle(
@@ -226,11 +230,9 @@ export class RubiksCube extends THREE.Mesh {
           targetDeltaAngle,
           rotatingAxis
         );
-        console.log("=======================");
-        console.log("location:", block.currentCoordinate, "--->", newLocation);
-        console.log("initialLocation:", block.initialCoordinate);
         block.currentCoordinate = newLocation;
-        block.rotateOnAxis(
+        block.position[rotatingAxis] = this.rotationMesh.position[rotatingAxis];
+        block.rotateOnWorldAxis(
           {
             x: new Vector3(1, 0, 0),
             y: new Vector3(0, 1, 0),
@@ -238,7 +240,6 @@ export class RubiksCube extends THREE.Mesh {
           }[rotatingAxis],
           targetDeltaAngle
         );
-        block.position[rotatingAxis] = this.rotationMesh.position[rotatingAxis];
         this.add(block);
       });
       this.positionBlocks();
@@ -344,20 +345,24 @@ export class RubiksCube extends THREE.Mesh {
   private async resetBlocks() {
     this._blocks.forEach(async (block) => {
       block.reset();
-      await this.animator.animate(
-        new Tween(block.rotation)
-          .to(
-            {
-              x: 0,
-              y: 0,
-              z: 0,
-            },
-            5000
-          )
-          .easing(TWEEN.Easing.Quadratic.Out)
-      );
     });
     await this.positionBlocks({ animate: true });
+    await Promise.all(
+      this._blocks.map(async (block) => {
+        await this.animator.animate(
+          new Tween(block.rotation)
+            .to(
+              {
+                x: 0,
+                y: 0,
+                z: 0,
+              },
+              1000
+            )
+            .easing(TWEEN.Easing.Quadratic.Out)
+        );
+      })
+    );
   }
 
   private positionBlocks({ animate = false } = { animate: false as boolean }) {
@@ -377,7 +382,7 @@ export class RubiksCube extends THREE.Mesh {
                   y: y * this._blockSize * 1.1,
                   z: z * this._blockSize * 1.1,
                 },
-                5000
+                1000
               )
               .easing(TWEEN.Easing.Quadratic.Out)
           );

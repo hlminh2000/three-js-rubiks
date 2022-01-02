@@ -10,7 +10,7 @@ export type Coordinate = {
 
 export class Block extends THREE.Mesh {
   private cubeMaterials = [
-    0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff00ff, 0x00ffff,
+    0xffff00, 0xff0000, 0xff00ff, 0x00ff00, 0x00ffff, 0x0000ff,
   ].map(
     (color) =>
       new THREE.MeshPhysicalMaterial({
