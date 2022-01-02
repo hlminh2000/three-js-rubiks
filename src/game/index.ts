@@ -9,8 +9,6 @@ import { Signal } from "typed-signals";
 import { RubiksCube } from "./components/RubiksCube";
 import { mouse, raycaster } from "./components/singletons";
 import { BLOOM_ENABLED, ORBIT_CONTROL_ENABLED } from "../utils/configs";
-import { Block } from "./components/Block";
-import { Vector3 } from "three";
 
 export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const renderFrameSignal = new Signal<(time: number) => void>();
@@ -56,7 +54,7 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   composer.addPass(renderScene);
   composer.addPass(bloomPass);
 
-  const gridHelper = new THREE.GridHelper(10, 100);
+  // const gridHelper = new THREE.GridHelper(10, 100);
   // scene.add(gridHelper);
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -64,11 +62,6 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   const rubiksCube = new RubiksCube({ renderFrameSignal });
   scene.add(rubiksCube);
   console.log(rubiksCube.box.max.sub(rubiksCube.box.min));
-  const indicatorblock = new Block({
-    blockSize: 10,
-    initialPosition: new Vector3(0, 0, 0),
-  });
-  // scene.add(indicatorblock);
 
   rubiksCube.subscribeToInteraction(({ type }) => {
     const handler = {
