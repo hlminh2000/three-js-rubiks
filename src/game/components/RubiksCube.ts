@@ -52,6 +52,7 @@ export class RubiksCube extends THREE.Mesh {
   public static Interactions = RubiksCubeInteractions;
 
   private _blockSize = 0.1;
+  private static blockPositionFactor = 1.1;
   private _blocks = flattenDeep<Block>(
     [
       [
@@ -182,7 +183,7 @@ export class RubiksCube extends THREE.Mesh {
   }
 
   private async onMouseUp() {
-    if (this.isRotating && this.rotatingAxis && !this.animator.animating) {
+    if (this.isRotating && this.rotatingAxis) {
       const rotatingBlocks = this.rotatingBlocks;
       const rotatingAxis = this.rotatingAxis;
       const targetDeltaAngle = RubiksCube.getSnapToAngle(
@@ -195,15 +196,17 @@ export class RubiksCube extends THREE.Mesh {
         type: RubiksCubeInteractions.ROTATE_END,
       });
 
+      this.animator.clear();
+
       await Promise.all([
         this.animator.animate(
           new Tween(this.rotationMesh.position)
             .to(
               {
                 ...this.rotationMesh.position,
-                [rotatingAxis]:
-                  this.rotationMesh.position[rotatingAxis] /
-                  RubiksCube.rotationOffsetAnimationRatio,
+                [rotatingAxis]:  this._blockSize * (
+                  this.rotationMesh.position[rotatingAxis] > 0 ? RubiksCube.blockPositionFactor : - RubiksCube.blockPositionFactor
+                ),
               },
               250
             )
@@ -218,7 +221,7 @@ export class RubiksCube extends THREE.Mesh {
                 z: 0,
                 [rotatingAxis]: targetDeltaAngle,
               },
-              500
+              250
             )
             .easing(TWEEN.Easing.Quadratic.Out)
         ),
@@ -378,9 +381,9 @@ export class RubiksCube extends THREE.Mesh {
             new Tween(block.position)
               .to(
                 {
-                  x: x * this._blockSize * 1.1,
-                  y: y * this._blockSize * 1.1,
-                  z: z * this._blockSize * 1.1,
+                  x: x * this._blockSize * RubiksCube.blockPositionFactor,
+                  y: y * this._blockSize * RubiksCube.blockPositionFactor,
+                  z: z * this._blockSize * RubiksCube.blockPositionFactor,
                 },
                 1000
               )
@@ -395,9 +398,9 @@ export class RubiksCube extends THREE.Mesh {
           currentCoordinate: { x, y, z },
         } = block;
 
-        block.position.x = x * this._blockSize * 1.1;
-        block.position.y = y * this._blockSize * 1.1;
-        block.position.z = z * this._blockSize * 1.1;
+        block.position.x = x * this._blockSize * RubiksCube.blockPositionFactor;
+        block.position.y = y * this._blockSize * RubiksCube.blockPositionFactor;
+        block.position.z = z * this._blockSize * RubiksCube.blockPositionFactor;
       });
     }
   }

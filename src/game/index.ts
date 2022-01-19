@@ -3,7 +3,6 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
 import { Signal } from "typed-signals";
 
 import { RubiksCube } from "./components/RubiksCube";
@@ -96,8 +95,13 @@ export function init({ domContainer }: { domContainer: HTMLDivElement }) {
   }
   window.addEventListener("mousemove", onMouseMove, false);
 
-  const vrButton = VRButton.createButton(renderer);
-  domContainer.appendChild(vrButton);
+  const onWindowResize = () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }
+  window.addEventListener( 'resize', onWindowResize, false );
+
 
   return { rubiksCube };
 }

@@ -15,6 +15,11 @@ export default class Animator {
     });
   }
 
+  public clear(){
+    this.animations = [];
+    this.animating = false;
+  }
+
   public animate(tween: Tween<any>) {
     this.animating = true;
     return new Promise((resolve, reject) => {
